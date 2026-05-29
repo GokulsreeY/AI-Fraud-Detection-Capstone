@@ -1,3 +1,4 @@
 target
 src/main/resources/creditcard.csv
 .idea
+*.DS_Store
