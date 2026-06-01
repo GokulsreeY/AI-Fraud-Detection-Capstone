@@ -29,48 +29,6 @@ def prepare_data(df: pd.DataFrame):
     return X, y
 
 
-# def train_random_forest(X, y, test_size: float = 0.2, random_state: int = 42):
-#     """Train a Random Forest classifier and return the model and test split."""
-#     X_train, X_test, y_train, y_test = train_test_split(
-#         X, y, test_size=test_size, random_state=random_state, stratify=y
-#     )
-
-#     model = RandomForestClassifier(
-#         n_estimators=100,
-#         random_state=random_state,
-#         n_jobs=-1,
-#         class_weight="balanced",
-#     )
-#     model.fit(X_train, y_train)
-#     return model, X_test, y_test
-
-
-
-# def train_random_forest(X, y, test_size: float = 0.2, random_state: int = 42):
-#     X_train, X_test, y_train, y_test = train_test_split(
-#         X, y, test_size=test_size, random_state=random_state, stratify=y
-#     )
-
-#     param_grid = {
-#         "n_estimators": [100, 200],
-#         "max_depth": [10, 20, None],
-#         "min_samples_split": [2, 5, 10],
-#         "min_samples_leaf": [1, 2, 4],
-#         "max_features": ["sqrt", "log2"]
-#     }
-    
-#     rf = RandomForestClassifier(random_state=random_state, n_jobs=-1, class_weight="balanced")
-    
-#     # GridSearchCV (commented out - slower but exhaustive)
-#     # grid_search = GridSearchCV(rf, param_grid, cv=3, scoring='roc_auc', n_jobs=-1)
-    
-#     # RandomizedSearchCV (faster - samples random combinations)
-#     grid_search = RandomizedSearchCV(rf, param_grid, n_iter=30, cv=3, scoring='roc_auc', n_jobs=-1, random_state=42)
-#     grid_search.fit(X_train, y_train)
-    
-#     print(f"Best params: {grid_search.best_params_}")
-#     return grid_search.best_estimator_, X_test, y_test
-
 
 def train_random_forest(X, y, test_size: float = 0.2, random_state: int = 42):
     """Optimized for quickest run: data sampling, fewer iterations, smaller grid."""
@@ -86,23 +44,6 @@ def train_random_forest(X, y, test_size: float = 0.2, random_state: int = 42):
     X_sample = X_train.sample(n=sample_size, random_state=42)
     y_sample = y_train.loc[X_sample.index]
     
-    # param_grid = {
-    #     "n_estimators": [100, 200],
-    #     "max_depth": [10, 20],
-    #     "min_samples_split": [5, 10],
-    #     "min_samples_leaf": [2, 4],
-    # }
-    
-    # rf = RandomForestClassifier(random_state=random_state, n_jobs=-1, class_weight="balanced")
-    # grid_search = RandomizedSearchCV(rf, param_grid, n_iter=15, cv=2, scoring='roc_auc', n_jobs=-1, random_state=42)
-
-    # param_grid = {
-    #     "n_estimators": [100, 200],
-    #     "max_depth": [10, 20, None],
-    #     "min_samples_split": [5, 10],
-    #     "min_samples_leaf": [2, 4],
-    #     "max_features": ["sqrt", "log2"]
-    # }
 
     param_grid = {
     "n_estimators": [200, 300, 400],
@@ -124,21 +65,12 @@ def train_random_forest(X, y, test_size: float = 0.2, random_state: int = 42):
 
     rf = RandomForestClassifier(random_state=42, n_jobs=-1, class_weight="balanced")
 
-    # grid_search = RandomizedSearchCV(
-    #     rf,
-    #     param_grid,
-    #     n_iter=15,         # Only 15 random combos
-    #     cv=2,              # 2-fold cross-validation
-    #     scoring='roc_auc',
-    #     n_jobs=-1,
-    #     random_state=42
-    # )
     grid_search = RandomizedSearchCV(
         estimator=rf,
 
         param_distributions=param_grid,
 
-        n_iter=50,
+        n_iter=17,  # Reduced iterations for quicker tuning
 
         cv=3,
 
@@ -166,9 +98,6 @@ def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
     y_score = model.predict_proba(X_test)[:, 1]
 
-    # y_scores = model.predict_proba(X_test)[:, 1]
-
-    # y_pred = (y_scores > 0.2).astype(int)
 
     metrics = {
         "accuracy": accuracy_score(y_test, y_pred),
@@ -179,7 +108,7 @@ def evaluate_model(model, X_test, y_test):
 
 
 def main():
-    csv_path = "/Users/gokulyenugadhati/projects/AI-Fraud-Detection-Capstone/src/main/resources/creditcard.csv"#pathlib.Path(__file__).resolve().parent / "src" / "main" / "resources" / "creditcard.csv"
+    csv_path = pathlib.Path(__file__).resolve().parent.parent / "src" / "main" / "resources" / "creditcard.csv"
     df = load_data(csv_path)
     X, y = prepare_data(df)
 

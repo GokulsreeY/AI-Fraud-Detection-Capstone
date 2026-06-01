@@ -13,4 +13,5 @@ public class FraudResponse {
     private double fraudProbability;
     private String riskLevel;
     private String recommendedAction;
+    
 }
