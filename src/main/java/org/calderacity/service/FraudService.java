@@ -2,8 +2,9 @@ package org.calderacity.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.calderacity.models.FraudFeatures;
 import org.calderacity.models.FraudResponse;
-import org.calderacity.models.TransactionRequest;
+import org.calderacity.models.PaymentCreatedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +15,22 @@ import java.util.stream.Collectors;
 
 @Service
 public class FraudService {
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    @Value("${python.script.path}")
+    private final FraudFeatureExtractor fraudFeatureExtractor;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    public FraudService(FraudFeatureExtractor fraudFeatureExtractor){
+        this.fraudFeatureExtractor = fraudFeatureExtractor;
+    }
+    @Value("${fraud.python.script-path}")
     private String pythonScriptPath;
 
-    public List<FraudResponse> evaluateTransactions(
-            List<TransactionRequest> requests)
+    public FraudResponse evaluateTransactions(
+            PaymentCreatedEvent event)
             throws Exception {
 
-        String json = mapper.writeValueAsString(requests);
+        System.out.println("ENTER EVALUATE TRANSACTION: ");
 
+        FraudFeatures fraudFeatures = fraudFeatureExtractor.extract(event);
+        String json = objectMapper.writeValueAsString(fraudFeatures);
         ProcessBuilder processBuilder =
                 new ProcessBuilder(
                         "python3",
@@ -32,6 +38,7 @@ public class FraudService {
                         json);
 
         processBuilder.redirectErrorStream(true);
+
 
         Process process = processBuilder.start();
 
@@ -51,8 +58,13 @@ public class FraudService {
                     "Python script failed: " + output
             );
         }
-        return mapper.readValue(
+        List<FraudResponse> responses = objectMapper.readValue(
                 output,
                 new TypeReference<List<FraudResponse>>() {});
+
+        if(responses.isEmpty()){
+            throw new RuntimeException("ML Model returned no fraud prediction");
+        }
+        return responses.get(0);
     }
 }
