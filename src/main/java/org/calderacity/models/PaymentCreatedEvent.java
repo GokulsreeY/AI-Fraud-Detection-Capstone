@@ -1,0 +1,16 @@
+package org.calderacity.models;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public record PaymentCreatedEvent(
+        UUID eventId,
+        UUID paymentId,
+        String accountId,
+        String merchantId,
+        BigDecimal amount,
+        String currency,
+        String status,
+        LocalDateTime createdAt
+) {}
